@@ -1,0 +1,67 @@
+orb:
+  descriptor_dim: 256
+  mamba_layers: 2
+  d_state: 16
+  d_conv: 3
+  expand: 2
+  use_kenc: true
+  kenc_in_dims: [2, 1, 1]     
+  kenc_f_dims: [64, 32, 32]
+  kenc_gammas: [20, 5, 1]
+  kenc_mlp_layers: [128, 256] 
+  denc_mlp_layers: [512, 256]
+  use_cross: true
+  final_activation: "tanh"
+  use_normalize: false
+  dropout_p: 0.1
+
+sift:
+  descriptor_dim: 128
+  mamba_layers: 2
+  d_state: 16
+  d_conv: 3
+  expand: 2
+  use_kenc: true
+  kenc_in_dims: [2, 1, 1]     
+  kenc_f_dims: [64, 32, 32]
+  kenc_gammas: [20, 5, 1]
+  kenc_mlp_layers: [128, 128] 
+  denc_mlp_layers: [256, 128]
+  use_cross: true
+  final_activation: "none"
+  use_normalize: true
+  dropout_p: 0.1
+
+superpoint:
+  descriptor_dim: 256
+  mamba_layers: 2
+  d_state: 16
+  d_conv: 3
+  expand: 2
+  use_kenc: true
+  kenc_in_dims: [2, 1]     
+  kenc_f_dims: [64, 64]
+  kenc_gammas: [20, 5]
+  kenc_mlp_layers: [128, 256] 
+  denc_mlp_layers: [512, 256]
+  use_cross: true
+  final_activation: "none"
+  use_normalize: true
+  dropout_p: 0.1
+
+alike:
+  descriptor_dim: 128
+  mamba_layers: 6
+  d_state: 16
+  d_conv: 3
+  expand: 2
+  use_kenc: true
+  kenc_in_dims: [2, 1]     
+  kenc_f_dims: [64, 64]
+  kenc_gammas: [20, 5]
+  kenc_mlp_layers: [128, 128]
+  denc_mlp_layers: [256, 128]
+  use_cross: true
+  final_activation: "none"
+  use_normalize: true
+  dropout_p: 0.1

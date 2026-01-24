@@ -1,0 +1,12 @@
+hpatches-benchmarking/hpatches-sequences-release
+hpatches-benchmarking/hpatches-sequences-release.zip
+
+lib/orbslam2_features/build/
+lib/orbslam2_features/lib/*.so
+lib/orbslam2_features/lib/*.pyd
+
+lib/ALIKE/
+lib/SuperPointPretrainedNetwork/
+
+.vscode/
+.idea/
