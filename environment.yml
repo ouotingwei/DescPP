@@ -236,4 +236,3 @@ dependencies:
     - xxhash==3.5.0
     - yarl==1.20.1
     - zetascale==2.8.6
-prefix: /home/ee605/anaconda3/envs/descpp_env
