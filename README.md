@@ -3,12 +3,21 @@ This is a pytorch implementation of "Desc++: Efficient Context-Aware Feature Des
 
 > ⚠️ This repository is currently provided for review and demonstration purposes only. At this stage, we release the inference and demo code of Desc++, while the training code is being finalized and will be released upon paper acceptance.
 
+## Introduction
+Desc++ is a plug-and-play descriptor enhancer designed to boost matching performance and discriminative power. By seamlessly fusing raw descriptors with geometric priors, it generates high-quality representations within the original descriptor space to ensure robust data association .
+
+- Overall pipeline of Desc++
 ![1](assets/1.png)
 
-![2](assets/2.png)
+- Image matching accuracy on HPatches(Left) and inference test (Right)
+    ![2](assets/2.png)
 
+- Comparison between ORB and ORB enhanced Desc++ on HPatches
 ![3](assets/3.png)
 
+- Comparison with different features and previous work on HPatches
+![4](assets/4.png)
+***
 ### 1. Installation
 #### 💡 Requirements:
 - **Linux**
@@ -30,7 +39,7 @@ git clone https://github.com/state-spaces/mamba && cd mamba
 pip install .
 ```
 
-#### 1.3. Extractor
+#### 1.3. Install Extractor
 Desc++ currently supports several mainstream feature extractors, including ORB, SIFT, SuperPoint, and ALIKE. To utilize these features within our enhancer, please follow the steps below:
 * [ORB](https://github.com/raulmur/ORB_SLAM2) (ORB extractor of ORB-SLAM2)
     ```
