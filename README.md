@@ -1,5 +1,5 @@
 # Desc++
-This is a PyTorch implementation of "Desc++: Efficient Context-Aware Feature Descriptor Enhancement for Robust Data Association in Visual SLAM"
+This is a PyTorch implementation of "Desc++: Efficient Context-Aware Feature Descriptor Enhancement for Robust Data Association in Visual SLAM."
 
 > ⚠️ This repository is currently provided for review and demonstration purposes only. At this stage, we release the inference and demo code of Desc++, while the training code is being finalized and will be released upon paper acceptance.
 
