@@ -7,16 +7,10 @@ This is a pytorch implementation of "Desc++: Efficient Context-Aware Feature Des
 Desc++ is a plug-and-play descriptor enhancer designed to boost matching performance and discriminative power. By seamlessly fusing raw descriptors with geometric priors, it generates high-quality representations within the original descriptor space to ensure robust data association .
 
 - Overall pipeline of Desc++
-![1](assets/1.png)
+    ![1](assets/1.png)
 
 - Image matching accuracy on HPatches(Left) and inference test (Right)
     ![2](assets/2.png)
-
-- Comparison between ORB and ORB enhanced Desc++ on HPatches
-![3](assets/3.png)
-
-- Comparison with different features and previous work on HPatches
-![4](assets/4.png)
 ***
 ### 1. Installation
 #### 💡 Requirements:
