@@ -11,6 +11,13 @@ Desc++ is a plug-and-play descriptor enhancer that boosts matching performance a
 
 - Image matching accuracy on HPatches(Left) and inference test (Right)
     ![2](assets/2.png)
+
+- Comparison between ORB and ORB enhanced Desc++ on HPatches
+    ![2](assets/3.png)
+  
+- Comparison with different features and previous work on HPatches
+    ![2](assets/4.png)
+  
 ***
 ### 1. Installation
 #### 💡 Requirements:
