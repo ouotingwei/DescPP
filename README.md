@@ -1,10 +1,10 @@
 # Desc++
-This is a pytorch implementation of "Desc++: Efficient Context-Aware Feature Descriptor Enhancement for Robust Data Association in Visual SLAM"
+This is a PyTorch implementation of "Desc++: Efficient Context-Aware Feature Descriptor Enhancement for Robust Data Association in Visual SLAM"
 
 > ⚠️ This repository is currently provided for review and demonstration purposes only. At this stage, we release the inference and demo code of Desc++, while the training code is being finalized and will be released upon paper acceptance.
 
 ## Introduction
-Desc++ is a plug-and-play descriptor enhancer designed to boost matching performance and discriminative power. By seamlessly fusing raw descriptors with geometric priors, it generates high-quality representations within the original descriptor space to ensure robust data association .
+Desc++ is a plug-and-play descriptor enhancer that boosts matching performance and discriminative power. By seamlessly fusing raw descriptors with geometric priors, it generates high-quality representations within the original descriptor space, ensuring robust data association.
 
 - Overall pipeline of Desc++
     ![1](assets/1.png)
@@ -80,7 +80,7 @@ cd hpatches-benchmarking
 python3 HPatches_Sequences_Matching_Benchmark.py 
 ```
 
-## 3. Integrate into Visual SLAM system
+## 3. Integrate into the Visual SLAM system
 - In this work, we integrate Desc++ into several ORB-based SLAM frameworks, including [ORB-SLAM2](https://github.com/raulmur/ORB_SLAM2) (Stereo), [ORB-SLAM3](https://github.com/UZ-SLAMLab/ORB_SLAM3.git) (Stereo-Inertial), and [RGB-L](https://github.com/TUMFTM/ORB_SLAM3_RGBL.git) (Visual-LiDAR-Inertial). We utilize pybind11 to bridge the Python-based inference with the C++ SLAM backend.
 - For ORB-SLAM, it is crucial to replace the official vocabulary with [our provided vocabulary file](Vocabulary/DescppVOC.zip) to ensure compatibility. Furthermore, the descriptor enhancement module should be inserted immediately following the feature extraction stage.
 
