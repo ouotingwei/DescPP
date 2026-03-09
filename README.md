@@ -3,20 +3,15 @@ This is a PyTorch implementation of "Desc++: Efficient Context-Aware Feature Des
 
 > ⚠️ This repository is currently provided for review and demonstration purposes only. At this stage, we release the inference and demo code of Desc++, while the training code is being finalized and will be released upon paper acceptance.
 
+<div align="center">
+    <a href="https://anonymous0187.github.io/" style="background-color: #2ea44f; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif; display: inline-block;">
+        View Anonymous Project Demo
+    </a>
+</div>
+
 ## Introduction
 Desc++ is a plug-and-play descriptor enhancer that boosts matching performance and discriminative power. By seamlessly fusing raw descriptors with geometric priors, it generates high-quality representations within the original descriptor space, ensuring robust data association.
-
-- Overall pipeline of Desc++
-    ![1](assets/1.png)
-
-- Image matching accuracy on HPatches(Left) and inference test (Right)
-    ![2](assets/2.png)
-
-- Comparison between ORB and ORB enhanced Desc++ on HPatches
-    ![2](assets/3.png)
-  
-- Comparison with different features and previous work on HPatches
-    ![2](assets/4.png)
+![1](assets/1.png)
   
 ***
 ### 1. Installation
