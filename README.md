@@ -5,7 +5,7 @@ This is a PyTorch implementation of "Desc++: Efficient Context-Aware Feature Des
 
 <div align="center">
     <a href="https://anonymous0187.github.io/" style="background-color: #2ea44f; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif; display: inline-block;">
-        View Anonymous Project Demo
+        Project Homepage
     </a>
 </div>
 
