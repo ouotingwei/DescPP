@@ -11,7 +11,7 @@ This is a PyTorch implementation of "Desc++: Efficient Descriptor Enhancement fo
 - **2026.09.18**: The optimized training code is now available.
 - **2026.08.23**: Desc++ has been accepted as a **Late Breaking Result (LBR)** at **IROS 2026**, Pittsburgh, PA, USA.
 - **2026.07.14**: Code and pretrained models are released.
-- **2026.07.13**: Our paper is now available on [arXiv]((https://arxiv.org/abs/2607.11099))!
+- **2026.07.13**: Our paper is now available on [arXiv](https://arxiv.org/abs/2607.11099)!
 
 ## Introduction
 Desc++ is a plug-and-play descriptor enhancer that boosts matching performance and discriminative power. By seamlessly fusing raw descriptors with geometric priors, it generates high-quality representations within the original descriptor space, ensuring robust data association.
@@ -150,10 +150,11 @@ If you find this work useful in your research, please consider citing:
 ```
 
 ## Acknowledgement
-This work builds upon several excellent open-source projects. We thank the authors for making their code publicly available:
+This work builds upon several excellent open-source projects and prior works. We thank the authors for making their code publicly available:
 
 - [FeatureBooster](https://github.com/SJTU-ViSYS/FeatureBooster): training pipeline and data preprocessing
 - [Mamba](https://github.com/state-spaces/mamba): selective state space model
+- [Learnable Fourier Features](https://arxiv.org/abs/2106.02795): keypoint geometric encoding
 - [ORB-SLAM2](https://github.com/raulmur/ORB_SLAM2) and [ORB-SLAM3](https://github.com/UZ-SLAMLab/ORB_SLAM3): ORB feature extraction and SLAM evaluation
 - [RGB-L](https://github.com/TUMFTM/ORB_SLAM3_RGBL): visual-LiDAR SLAM evaluation
 - [MAVIS](https://github.com/MAVIS-SLAM/ORB_SLAM3_MULTI): multi-camera visual-inertial SLAM evaluation
