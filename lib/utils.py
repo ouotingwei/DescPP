@@ -119,7 +119,6 @@ def sample_descriptors_from_map(
         desc = sampled.squeeze(2).squeeze(0).permute(1, 0)  # [N, C]
         all_descs.append(desc)
 
-    # 保證維度對齊（需要 padding 或保證每張圖有相同 N）
     return torch.stack(all_descs, dim=0)  # [B, N, C]
 
 def interpolate_depth(pos, depth):
