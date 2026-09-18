@@ -1,0 +1,92 @@
+# DescPP training configuration.
+#
+#   python train.py --feature orb
+#   python train.py --feature superpoint --batch-size 8 --epochs 30
+
+paths:
+  train_scene_path: train_scenes.txt
+  valid_scene_path: valid_scenes.txt
+  scene_info_path: /mnt/ssd/MegaDepth_SfM_v1/preprocessing
+  base_path: /mnt/ssd/MegaDepth_SfM_v1
+  checkpoint_root: ./runs            # outputs go to <checkpoint_root>/DescPP_<feature>
+
+data:
+  overlap_min: 0.1
+  overlap_max: 1.0
+  max_pairs_per_scene: 300
+  val_pairs_per_scene: 50
+  kps_per_image: 2048
+  crop_image_size: 512
+  rebuild_every_epoch: true          # resample image pairs and crops every epoch
+
+train:
+  max_epoch: 50
+  init_lr: 0.001
+  min_lr_ratio: 0.01                 # final lr = init_lr * min_lr_ratio
+  warmup_steps: 500
+  batch_size: 16
+  num_workers: 0
+  run_val: false
+  seed: 42
+
+loss:
+  num_bins: 10
+  pos_radius: 3
+  neg_radius: 16
+  min_pos: 0
+
+# Per-feature settings.
+#   descriptor:   binary | float
+#   extractor:    keyword arguments of the extractor in lib/features.py
+#   model:        keyword arguments of DescPP in model/DescPP.py
+features:
+  orb:
+    descriptor: binary
+    boost_weight: 1.0
+    extractor: {n_features: 3000, scale_factor: 1.2, n_levels: 8}
+    model:
+      desc_dim: 256
+      kp_dims: [2, 1, 1]             # (u, v), size, angle
+      F_dims: [64, 32, 32]
+      gammas: [20, 5, 1]
+      mamba_layers: 2
+      output: tanh
+
+  superpoint:
+    descriptor: float
+    motion_blur: null
+    boost_weight: 1.0
+    extractor: {weights_path: lib/SuperPointPretrainedNetwork/superpoint_v1.pth, nms_dist: 4, conf_thresh: 0.015, nn_thresh: 0.7}
+    model:
+      desc_dim: 256
+      kp_dims: [2, 1]                # (u, v), confidence
+      F_dims: [64, 64]
+      gammas: [20, 5]
+      mamba_layers: 2
+      output: l2
+
+  alike:
+    descriptor: float
+    motion_blur: null
+    boost_weight: 1.0
+    extractor: {model: alike-l, top_k: -1, scores_th: 0.2}
+    model:
+      desc_dim: 128
+      kp_dims: [2, 1]                # (u, v), score
+      F_dims: [64, 64]
+      gammas: [20, 5]
+      mamba_layers: 6
+      output: l2
+
+  sift:
+    descriptor: float
+    motion_blur: null
+    boost_weight: 1.0
+    extractor: {nfeatures: -1}
+    model:
+      desc_dim: 128
+      kp_dims: [2, 1, 1]             # (u, v), scale, orientation
+      F_dims: [64, 32, 32]
+      gammas: [20, 5, 1]
+      mamba_layers: 2
+      output: l2

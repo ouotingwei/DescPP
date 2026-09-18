@@ -1,9 +1,15 @@
+# Copyright (c) 2023, Tri Dao, Albert Gu.
+
 import math
+from typing import Optional, List
+import numpy as np
+import time
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
-from typing import List, Optional
+from torch import Tensor
+
 from einops import rearrange, repeat
 
 from mamba_ssm.ops.selective_scan_interface import selective_scan_fn, mamba_inner_fn
@@ -25,40 +31,64 @@ except ImportError:
 
 
 def MLP(channels: List[int], do_bn: bool=False) -> nn.Module:
+    n = len(channels)
     layers = []
-    for i in range(1, len(channels)):
+    for i in range(1, n):
         layers.append(nn.Linear(channels[i-1], channels[i]))
-        if i < (len(channels)-1):
-            if do_bn: layers.append(nn.BatchNorm1d(channels[i]))
+        if i < (n-1):
+            if do_bn:
+                layers.append(nn.BatchNorm1d(channels[i]))
             layers.append(nn.ReLU())
     return nn.Sequential(*layers)
 
+
 class LFFKeypointEncoder(nn.Module):
-    def __init__(self, in_dims: list, f_dims: list, gammas: list, mlp_layers: list, out_d: int):
+    def __init__(self, F_dims: list, D: int = 256, gammas: list = None, in_dims: list = (2, 1)):
+        """
+        Learnable Fourier Features keypoint encoder.
+
+        Args:
+            F_dims:  Fourier feature dimension of each keypoint attribute group.
+            D:       Output dimension.
+            gammas:  Initialization scale of each group.
+            in_dims: Input dimension of each group, e.g.
+                     ORB / SIFT : (u, v), size, angle -> [2, 1, 1]
+                     SP / ALIKE : (u, v), score       -> [2, 1]
+        """
         super().__init__()
-        self.in_dims = in_dims
-        self.f_dims = f_dims
-        
+        assert gammas is not None and len(gammas) == len(F_dims) == len(in_dims)
+
+        self.F_dims = list(F_dims)
+        self.in_dims = list(in_dims)
+        self.D = D
+
         self.Wr_list = nn.ParameterList()
-        for f_dim, gamma, in_dim in zip(f_dims, gammas, in_dims):
-            W = torch.empty(f_dim // 2, in_dim)
+        for F_dim, gamma, in_dim in zip(F_dims, gammas, in_dims):
+            W = torch.empty(F_dim // 2, in_dim)
             nn.init.normal_(W, mean=0, std=gamma**-2)
             self.Wr_list.append(nn.Parameter(W))
 
-        total_f_dim = sum(f_dims)
-        self.mlp = MLP([total_f_dim] + mlp_layers + [out_d])
+        total_dim = sum(F_dims)
+        self.mlp = MLP([total_dim, 128, D, D])
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x):
+        """
+        :param x: [N, sum(in_dims)]
+        :return: [N, D]
+        """
+        groups, start = [], 0
+        for d in self.in_dims:
+            groups.append(x[:, start:start + d])
+            start += d
+
         proj_list = []
-        start = 0
-        for i, dim in enumerate(self.in_dims):
-            feat = x[:, start : start + dim]
-            start += dim
-            proj = feat @ self.Wr_list[i].T
-            F_feat = torch.cat([torch.cos(proj), torch.sin(proj)], dim=-1) / np.sqrt(self.f_dims[i])
+        for feat, W, F_dim in zip(groups, self.Wr_list, self.F_dims):
+            proj = feat @ W.T   # [N, F_dim/2]
+            F_feat = torch.cat([torch.cos(proj), torch.sin(proj)], dim=-1) / np.sqrt(F_dim)
             proj_list.append(F_feat)
 
-        return self.mlp(torch.cat(proj_list, dim=-1))
+        return self.mlp(torch.cat(proj_list, dim=-1))  # [N, D]
+
 
 class DescriptorEncoder(nn.Module):
     def __init__(self, descriptor_dim: int, layers: List[int], dropout: bool=False, p: float=0.1) -> None:
@@ -72,7 +102,8 @@ class DescriptorEncoder(nn.Module):
         if self.use_dropout:
             return residual + self.dropout(self.encoder(descs))
         return residual + self.encoder(descs)
-    
+
+
 class PositionwiseFeedForward(nn.Module):
     def __init__(self, descriptor_dim: int, dropout:bool=False, p: float=0.1) -> None:
         super().__init__()
@@ -88,7 +119,7 @@ class PositionwiseFeedForward(nn.Module):
             x = self.dropout(x)
         x = self.layer_norm(x + residual)
         return x
-
+    
 class AFTAttention(nn.Module):
     """ Attention-free attention """
     def __init__(self, d_model: int, dropout: bool = False, p: float = 0.1) -> None:
@@ -119,6 +150,7 @@ class AFTAttention(nn.Module):
         x += residual
         x = self.layer_norm(x)
         return x
+
 
 class MambaAFTsMixer(nn.Module):
     def __init__(
@@ -298,7 +330,7 @@ class MambaAFTsMixer(nn.Module):
         # AFT branch
         aft_out = self.aft(hidden_states)
 
-        # fusion gate
+        # fuse using softmax gate
         score = self.fuse_score(torch.cat([aft_out, mamba_out], dim=-1))
         gate = torch.softmax(score, dim=-1) 
 
@@ -307,7 +339,8 @@ class MambaAFTsMixer(nn.Module):
         out = aft_w * aft_out + mamba_w * mamba_out
 
         return out
-    
+
+
 class MambaAFTsLayer(nn.Module):
     def __init__(self, descriptor_dim: int, d_state: int = 16, d_conv: int = 3, expand: int = 2,
                  dropout: bool=False, p: float=0.1):
@@ -335,12 +368,13 @@ class MambaAFTsLayer(nn.Module):
         residual = x
         y = self.mamba_aft_mixer(x) # [B, N, D]
         y = self.dropout(y)
-        y = self.norm1(y + residual) # residual+LN
+        y = self.norm1(y + residual)  # residual+LN
         y = self.ffn(y)               
 
         if squeeze_back:
-            y = y.squeeze(0) # [N, D]
+            y = y.squeeze(0)  # [N, D]
         return y
+
 
 class MambaAFTsNN(nn.Module):
     def __init__(self, descriptor_dim: int, layer_num: int,
@@ -359,67 +393,81 @@ class MambaAFTsNN(nn.Module):
             x = layer(x)
         return x
 
+
 class DescPP(nn.Module):
-    def __init__(self, config: dict):
+    """
+    DescPP descriptor enhancement network.
+
+    Per-feature hyper-parameters are defined in config/train_config.yaml
+    under features.<name>.model.
+
+    Args:
+        desc_dim:     Descriptor dimension.
+        kp_dims:      Dimension of each keypoint attribute group.
+        F_dims:       Fourier feature dimension of each keypoint group.
+        gammas:       Fourier feature initialization scale of each group.
+        output:       "tanh" for binary descriptors, "l2" for float descriptors.
+        mamba_layers: Number of Mamba-AFT layers.
+    """
+    def __init__(self, desc_dim=256, kp_dims=(2, 1), F_dims=(64, 64), gammas=(20, 5),
+                 output="l2", dropout=False, p=0.1, use_kenc=True, use_cross=True,
+                 mamba_layers=2, d_state=16, d_conv=3, expand=2):
         super().__init__()
-        d_dim = config['descriptor_dim']
-        dropout_p = config.get('dropout_p', 0.1)
+        assert output in ("l2", "tanh")
+        self.use_kenc = use_kenc
+        self.use_cross = use_cross
+        self.use_dropout = dropout
+        self.output = output
 
-        # Descriptor Encoder
-        self.denc = DescriptorEncoder(
-            descriptor_dim=d_dim, 
-            layers=config['denc_mlp_layers'], 
-            dropout=True, p=dropout_p
-        )
+        self.F_dims = list(F_dims)
+        self.gammas = list(gammas)
 
-        # Keypoint Encoder
-        self.use_kenc = config.get('use_kenc', True)
-        if self.use_kenc:
-            self.kenc = LFFKeypointEncoder(
-                in_dims=config['kenc_in_dims'],
-                f_dims=config['kenc_f_dims'],
-                gammas=config['kenc_gammas'],
-                mlp_layers=config['kenc_mlp_layers'],
-                out_d=d_dim
-            )
+        if use_kenc:
+            self.kenc = LFFKeypointEncoder(F_dims=self.F_dims, D=desc_dim,
+                                           gammas=self.gammas, in_dims=kp_dims)
 
-        # Mamba-AFT Mixer Layers
-        self.use_cross = config.get('use_cross', True)
-        if self.use_cross:
-            self.layer_norm = nn.LayerNorm(d_dim, eps=1e-6)
+        self.denc = DescriptorEncoder(descriptor_dim=desc_dim, layers=[desc_dim * 2, desc_dim],
+                                      dropout=dropout, p=p)
+
+        if use_cross:
+            self.layer_norm = nn.LayerNorm(desc_dim, eps=1e-6)
             self.attn_proj = MambaAFTsNN(
-                descriptor_dim=d_dim,
-                layer_num=config['mamba_layers'],
-                d_state=config['d_state'],
-                d_conv=config['d_conv'],
-                expand=config['expand'],
-                dropout=True, p=dropout_p
+                descriptor_dim=desc_dim,
+                layer_num=mamba_layers,
+                d_state=d_state,
+                d_conv=d_conv,
+                expand=expand,
+                dropout=dropout,
+                p=p,
             )
 
-        # Final Output 
-        self.final_proj = nn.Linear(d_dim, d_dim)
-        
-        # activation
-        act_type = str(config.get('final_activation', 'none')).lower()
-        self.last_activation = nn.Tanh() if act_type == 'tanh' else nn.Identity()
-            
-        # normalization
-        self.use_normalize = config.get('use_normalize', False)
-        self.dropout = nn.Dropout(p=dropout_p)
+        self.dropout = nn.Dropout(p=p) if dropout else nn.Identity()
+        self.final_proj = nn.Linear(desc_dim, desc_dim)
+
+    @torch.no_grad()
+    def freeze(self):
+        self.requires_grad_(False)
+
+    @torch.no_grad()
+    def unfreeze(self):
+        self.requires_grad_(True)
 
     def forward(self, desc, kpts):
-        # Local Fusion
         x = self.denc(desc)
         if self.use_kenc:
             x = x + self.kenc(kpts)
             x = self.dropout(x)
-        # Context Aggregation
         if self.use_cross:
             x = self.attn_proj(self.layer_norm(x))
-        
         x = self.final_proj(x)
-        x = self.last_activation(x)
-        
-        if self.use_normalize:
-            x = F.normalize(x, dim=-1)
+        if self.output == "tanh":
+            x = torch.tanh(x)            # binary descriptors, binarized in the loss
+        else:
+            x = F.normalize(x, dim=-1)   # float descriptors, unit norm
         return x
+
+    def desc_parameters(self):
+        return self.parameters()
+
+def build_model(model_cfg: dict) -> DescPP:
+    return DescPP(**model_cfg)

@@ -7,6 +7,12 @@ This is a PyTorch implementation of "Desc++: Efficient Descriptor Enhancement fo
     </a>
 </div>
 
+# News
+- **2026.09.18**: The optimized training code is now available.
+- **2026.08.23**: Desc++ has been accepted as a **Late Breaking Result (LBR)** at **IROS 2026**, Pittsburgh, PA, USA.
+- **2026.07.14**: Code and pretrained models are released.
+- **2026.07.13**: Our paper is now available on [arXiv]((https://arxiv.org/abs/2607.11099))!
+
 ## Introduction
 Desc++ is a plug-and-play descriptor enhancer that boosts matching performance and discriminative power. By seamlessly fusing raw descriptors with geometric priors, it generates high-quality representations within the original descriptor space, ensuring robust data association.
 ![1](assets/1.png)
@@ -81,16 +87,73 @@ python3 HPatches_Sequences_Matching_Benchmark.py
 ```
 
 ## 3. Integrate into the Visual SLAM system
-- In this work, we integrate Desc++ into several ORB-based SLAM frameworks, including [ORB-SLAM2](https://github.com/raulmur/ORB_SLAM2) (Stereo), [ORB-SLAM3](https://github.com/UZ-SLAMLab/ORB_SLAM3.git) (Stereo-Inertial), and [RGB-L](https://github.com/TUMFTM/ORB_SLAM3_RGBL.git) (Visual-LiDAR-Inertial). We utilize pybind11 to bridge the Python-based inference with the C++ SLAM backend.
+- In this work, we integrate Desc++ into several ORB-based SLAM frameworks, including [ORB-SLAM2](https://github.com/raulmur/ORB_SLAM2) (Stereo), [ORB-SLAM3](https://github.com/UZ-SLAMLab/ORB_SLAM3.git) (Stereo-Inertial), [RGB-L](https://github.com/TUMFTM/ORB_SLAM3_RGBL.git) (Visual-LiDAR-Inertial), and [MAVIS-SLAM](https://github.com/MAVIS-SLAM/OpenMAVIS.git) (Multi Camea-Inertial). We utilize pybind11 to bridge the Python-based inference with the C++ SLAM backend.
 - For ORB-SLAM, it is crucial to replace the official vocabulary with [our provided vocabulary file](Vocabulary/DescppVOC.zip) to ensure compatibility. Furthermore, the descriptor enhancement module should be inserted immediately following the feature extraction stage.
 
 ## 4. Training
 
-#### Training Requirements:
-> The code is currently under review and will be released soon.
+### 4.1 Hardware Requirements
+We recommend the following setup for training:
 
-If you want to train Desc++ on your own machine, we recommend:
-- **≥ 128 GB system RAM**
-- **≥ 24 GB GPU VRAM**
-- **≥ 1.2 TB free disk space** for training data
-Training on a single RTX 4090 takes about two days.
+| Resource | Recommended |
+|---|---|
+| System RAM | ≥ 16 GB |
+| GPU VRAM | ≥ 24 GB |
+| Disk space | ≥ 1.2 TB (MegaDepth) |
+
+Training one model for 50 epochs takes about two days on a single NVIDIA RTX 4090.
+
+### 4.2 Data Preparation
+1. Download the [MegaDepth](https://www.cs.cornell.edu/projects/megadepth/) dataset and preprocess it following [FeatureBooster](https://github.com/SJTU-ViSYS/FeatureBooster).
+2. Set the dataset paths in `config/train_config.yaml`:
+```yaml
+   paths:
+     scene_info_path: /path/to/MegaDepth/preprocessing
+     base_path: /path/to/MegaDepth
+```
+
+### 4.3 Train
+Select the feature with `--feature`:
+```bash
+python train_descpp.py --feature orb
+python train_descpp.py --feature sift
+python train_descpp.py --feature superpoint
+python train_descpp.py --feature alike
+```
+
+Common options:
+```bash
+python train_descpp.py --feature orb --batch-size 8 --epochs 30 --lr 5e-4
+python train_descpp.py --feature orb --run-val                         # enable validation
+python train_descpp.py --feature orb --resume runs/DescPP_orb/last.pt  # resume training
+```
+
+All other settings (data sampling, loss, and per-feature model configuration) are defined in `config/train_config.yaml`.
+
+### 4.4 Outputs
+Results are saved to `runs/DescPP_<feature>/`:
+- `model_epoch_XXX.pt`: model weights after each epoch
+- `last.pt`: full training state for resuming
+- `train_log.csv`, `step_log.csv`: per-epoch and per-step training logs
+- `config.yaml`: the resolved configuration of the run
+
+## Citation
+If you find this work useful in your research, please consider citing:
+
+```bibtex
+@article{ou2026descpp,
+  title   = {{Desc++}: Efficient Descriptor Enhancement for Data Association in Existing Visual {SLAM} Systems},
+  author  = {Ou, Ting-Wei and Lin, Huang-Ting and Young, Kuu-Young},
+  journal = {arXiv preprint arXiv:2607.11099},
+  year    = {2026}
+}
+```
+
+## Acknowledgement
+This work builds upon several excellent open-source projects. We thank the authors for making their code publicly available:
+
+- [FeatureBooster](https://github.com/SJTU-ViSYS/FeatureBooster): training pipeline and data preprocessing
+- [Mamba](https://github.com/state-spaces/mamba): selective state space model
+- [ORB-SLAM2](https://github.com/raulmur/ORB_SLAM2) and [ORB-SLAM3](https://github.com/UZ-SLAMLab/ORB_SLAM3): ORB feature extraction and SLAM evaluation
+- [RGB-L](https://github.com/TUMFTM/ORB_SLAM3_RGBL): visual-LiDAR SLAM evaluation
+- [MAVIS](https://github.com/MAVIS-SLAM/ORB_SLAM3_MULTI): multi-camera visual-inertial SLAM evaluation
