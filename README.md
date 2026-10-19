@@ -144,8 +144,9 @@ If you find this work useful in your research, please consider citing:
 @article{ou2026descpp,
   title   = {{Desc++}: Efficient Descriptor Enhancement for Data Association in Existing Visual {SLAM} Systems},
   author  = {Ou, Ting-Wei and Lin, Huang-Ting and Young, Kuu-Young},
-  journal = {arXiv preprint arXiv:2607.11099},
-  year    = {2026}
+  journal = {IEEE Access},
+  year    = {2026},
+  doi     = {10.1109/ACCESS.2026.3743499}
 }
 ```
 
